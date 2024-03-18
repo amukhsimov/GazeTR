@@ -50,8 +50,8 @@ You can import the model in `model.py` for your own project.
 
 We give an example. Note that, the `line 114` in `model.py` uses `.cuda()`. You should remove it if you run the model in CPU.
 ```
-from model import Model
-GazeTR = Model()
+from gazetr import GazeTRModel
+GazeTR = GazeTRModel()
 
 img = torch.ones(10, 3, 224 ,224).cuda()
 img = {'face': img}
@@ -65,7 +65,7 @@ gaze = GazeTR(img)
 ```
 
 ## Pre-trained model
-You can download from <a href="https://drive.google.com/file/d/1WEiKZ8Ga0foNmxM7xFabI4D5ajThWAWj/view?usp=sharing" target="_blank"> google drive </a> or <a href="https://pan.baidu.com/s/1GEbjbNgXvVkisVWGtTJm7g" target="_blank"> baidu cloud disk </a> with code `1234`. 
+You can download from <a href="https://drive.google.com/file/d/1WEiKZ8Ga0foNmxM7xFabI4D5ajThWAWj/view?usp=sharing" target="_blank"> google drive </a> or <a href="https://drive.google.com/file/d/1BEt12wgvBVGcj2r25TtR8uiIiS8h2dJ2/view?usp=sharing" target="_blank"> disk </a> with code `1234`. 
   
 This is the pre-trained model in ETH-XGaze dataset with 50 epochs and 512 batch sizes. 
 

@@ -3,7 +3,8 @@ import torch.nn as nn
 import numpy as np
 import math
 import copy
-from resnet import resnet18
+from gazetr import resnet18
+
 
 def _get_clones(module, N):
     return nn.ModuleList([copy.deepcopy(module) for i in range(N)])
@@ -65,9 +66,9 @@ class TransformerEncoderLayer(nn.Module):
         src = self.norm2(src)
         return src
 
-class Model(nn.Module):
+class GazeTRModel(nn.Module):
     def __init__(self):
-        super(Model, self).__init__()
+        super(GazeTRModel, self).__init__()
         maps = 32
         nhead = 8
         dim_feature = 7*7
