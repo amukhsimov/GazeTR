@@ -98,8 +98,8 @@ class GazeTRModel(nn.Module):
         self.feed = nn.Linear(maps, 2)
         self.loss_op = nn.L1Loss()
 
-    def base_model_feature(self, x_in):
-        return self.base_model(x_in["face"])
+    def base_model_feature(self, face):
+        return self.base_model(face)
 
     def feature(self, face):
         feature = self.base_model(face)
