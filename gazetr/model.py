@@ -1,5 +1,5 @@
 import torch
-import torch.nn as nn 
+import torch.nn as nn
 import numpy as np
 import math
 import copy
@@ -8,6 +8,7 @@ from gazetr import resnet18
 
 def _get_clones(module, N):
     return nn.ModuleList([copy.deepcopy(module) for i in range(N)])
+
 
 class TransformerEncoder(nn.Module):
 
@@ -49,12 +50,11 @@ class TransformerEncoderLayer(nn.Module):
     def pos_embed(self, src, pos):
         batch_pos = pos.unsqueeze(1).repeat(1, src.size(1), 1)
         return src + batch_pos
-        
 
     def forward(self, src, pos):
-                # src_mask: Optional[Tensor] = None,
-                # src_key_padding_mask: Optional[Tensor] = None):
-                # pos: Optional[Tensor] = None):
+        # src_mask: Optional[Tensor] = None,
+        # src_key_padding_mask: Optional[Tensor] = None):
+        # pos: Optional[Tensor] = None):
 
         q = k = self.pos_embed(src, pos)
         src2 = self.self_attn(q, k, value=src)[0]
@@ -66,15 +66,16 @@ class TransformerEncoderLayer(nn.Module):
         src = self.norm2(src)
         return src
 
+
 class GazeTRModel(nn.Module):
     def __init__(self):
         super(GazeTRModel, self).__init__()
         maps = 32
         nhead = 8
-        dim_feature = 7*7
-        dim_feedforward=512
+        dim_feature = 7 * 7
+        dim_feedforward = 512
         dropout = 0.1
-        num_layers=6
+        num_layers = 6
 
         self.base_model = resnet18(pretrained=False, maps=maps)
 
@@ -84,51 +85,59 @@ class GazeTRModel(nn.Module):
         # dropout: prob
 
         encoder_layer = TransformerEncoderLayer(
-                  maps, 
-                  nhead, 
-                  dim_feedforward, 
-                  dropout)
-
-        encoder_norm = nn.LayerNorm(maps) 
+            maps,
+            nhead,
+            dim_feedforward,
+            dropout)
+        encoder_norm = nn.LayerNorm(maps)
         # num_encoder_layer: deeps of layers 
 
         self.encoder = TransformerEncoder(encoder_layer, num_layers, encoder_norm)
-
         self.cls_token = nn.Parameter(torch.randn(1, 1, maps))
-
-        self.pos_embedding = nn.Embedding(dim_feature+1, maps)
-
+        self.pos_embedding = nn.Embedding(dim_feature + 1, maps)
         self.feed = nn.Linear(maps, 2)
-            
         self.loss_op = nn.L1Loss()
 
+    def base_model_feature(self, x_in):
+        return self.base_model(x_in["face"])
 
-    def forward(self, x_in):
-        feature = self.base_model(x_in["face"])
+    def feature(self, face):
+        feature = self.base_model(face)
         batch_size = feature.size(0)
         feature = feature.flatten(2)
         feature = feature.permute(2, 0, 1)
-        
-        cls = self.cls_token.repeat( (1, batch_size, 1))
-        feature = torch.cat([cls, feature], 0)
-        
-        position = torch.from_numpy(np.arange(0, 50)).cuda()
 
+        cls = self.cls_token.repeat((1, batch_size, 1))
+        feature = torch.cat([cls, feature], 0)
+        position = torch.from_numpy(np.arange(0, 50)).cuda()
         pos_feature = self.pos_embedding(position)
 
         # feature is [HW, batch, channel]
         feature = self.encoder(feature, pos_feature)
-  
         feature = feature.permute(1, 2, 0)
+        feature = feature[:, :, 0]
 
-        feature = feature[:,:,0]
+        return feature
 
+    def forward(self, face):
+        feature = self.base_model(face)
+        batch_size = feature.size(0)
+        feature = feature.flatten(2)
+        feature = feature.permute(2, 0, 1)
+
+        cls = self.cls_token.repeat((1, batch_size, 1))
+        feature = torch.cat([cls, feature], 0)
+        position = torch.from_numpy(np.arange(0, 50)).cuda()
+        pos_feature = self.pos_embedding(position)
+
+        # feature is [HW, batch, channel]
+        feature = self.encoder(feature, pos_feature)
+        feature = feature.permute(1, 2, 0)
+        feature = feature[:, :, 0]
         gaze = self.feed(feature)
-        
         return gaze
 
     def loss(self, x_in, label):
         gaze = self.forward(x_in)
-        loss = self.loss_op(gaze, label) 
+        loss = self.loss_op(gaze, label)
         return loss
-
