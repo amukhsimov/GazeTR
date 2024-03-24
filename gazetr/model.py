@@ -109,7 +109,9 @@ class GazeTRModel(nn.Module):
 
         cls = self.cls_token.repeat((1, batch_size, 1))
         feature = torch.cat([cls, feature], 0)
-        position = torch.from_numpy(np.arange(0, 50)).cuda()
+        position = torch.from_numpy(np.arange(0, 50))
+        if next(self.parameters()).is_cuda:
+            position = position.cuda()
         pos_feature = self.pos_embedding(position)
 
         # feature is [HW, batch, channel]
